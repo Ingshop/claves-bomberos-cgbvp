@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Claves - CGBVP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #e74c3c;
+        }
+
+        .header h1 {
+            color: #c0392b;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .search-container {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 50px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #e74c3c;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .claves-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .clave-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #e74c3c;
+            transition: all 0.3s ease;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .clave-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .clave-card.hidden {
+            opacity: 0;
+            transform: scale(0.8);
+            pointer-events: none;
+        }
+
+        .clave-codigo {
+            background: #e74c3c;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .clave-descripcion {
+            color: #2c3e50;
+            font-size: 1em;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .clave-categoria {
+            background: #3498db;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            display: inline-block;
+        }
+
+        .emergency-level {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .level-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .level-0 { background: #27ae60; }
+        .level-1 { background: #f39c12; }
+        .level-2 { background: #e67e22; }
+        .level-3 { background: #e74c3c; }
+        .level-4 { background: #8e44ad; }
+        .level-5 { background: #2c3e50; }
+        .level-6 { background: #c0392b; }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .search-container {
+                flex-direction: column;
+            }
+
+            .search-input {
+                min-width: 100%;
+            }
+
+            .claves-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚒 Sistema de Claves CGBVP</h1>
+            <p>Consulta rápida y dinámica de códigos de comunicación</p>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="🔍 Buscar por código o descripción...">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="servicio">Servicios</button>
+                <button class="filter-btn" data-filter="emergencia">Emergencias</button>
+                <button class="filter-btn" data-filter="especiales">Servicios Especiales</button>
+                <button class="filter-btn" data-filter="jerarquia">Jerarquías</button>
+                <button class="filter-btn" data-filter="compania">Compañía</button>
+                <button class="filter-btn" data-filter="nacional">Comando Nacional</button>
+                <button class="filter-btn" data-filter="departamental">Departamentales</button>
+                <button class="filter-btn" data-filter="locales">Locales</button>
+                <button class="filter-btn" data-filter="personal">Personal</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalClaves">0</div>
+                <div class="stat-label">Total Claves</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="visibleClaves">0</div>
+                <div class="stat-label">Mostrando</div>
+            </div>
+        </div>
+
+        <div class="claves-grid" id="clavesGrid">
+            <!-- Las claves se cargarán dinámicamente -->
+        </div>
+
+        <div class="no-results" id="noResults" style="display: none;">
+            🔍 No se encontraron resultados para tu búsqueda
+        </div>
+    </div>
+
+    <script>
+        // Datos completos de las claves del CGBVP
+        const claves = [
+            // SERVICIOS (10.xx)
+            { codigo: "10.01", descripcion: "Adelante", categoria: "servicio" },
+            { codigo: "10.02", descripcion: "Operador de radio identifíquese", categoria: "servicio" },
+            { codigo: "10.03", descripcion: "Cambio frecuencia radial", categoria: "servicio" },
+            { codigo: "10.04", descripcion: "Llame por teléfono", categoria: "servicio" },
+            { codigo: "10.05", descripcion: "Comprendido", categoria: "servicio" },
+            { codigo: "10.06", descripcion: "Afirmativo", categoria: "servicio" },
+            { codigo: "10.07", descripcion: "Se dirige / Diríjase", categoria: "servicio" },
+            { codigo: "10.08", descripcion: "Repita mensaje", categoria: "servicio" },
+            { codigo: "10.09", descripcion: "Negativo", categoria: "servicio" },
+            { codigo: "10.10", descripcion: "Comunicación con ...", categoria: "servicio" },
+            { codigo: "10.11", descripcion: "Al mando de la unidad", categoria: "servicio" },
+            { codigo: "10.12", descripcion: "Siga en escucha", categoria: "servicio" },
+            { codigo: "10.13", descripcion: "Derrotero", categoria: "servicio" },
+            { codigo: "10.14", descripcion: "Se consulta", categoria: "servicio" },
+            { codigo: "10.15", descripcion: "Efectivos", categoria: "servicio" },
+            { codigo: "10.16", descripcion: "Indique magnitud", categoria: "servicio" },
+            { codigo: "10.17", descripcion: "Informe novedades", categoria: "servicio" },
+            { codigo: "10.18", descripcion: "Dirección", categoria: "servicio" },
+            { codigo: "10.19", descripcion: "Ubicación", categoria: "servicio" },
+            { codigo: "10.20", descripcion: "En el lugar", categoria: "servicio" },
+            { codigo: "10.21", descripcion: "Línea privada", categoria: "servicio" },
+            { codigo: "10.22", descripcion: "En sintonía", categoria: "servicio" },
+            { codigo: "10.23", descripcion: "Se retira del lugar", categoria: "servicio" },
+            { codigo: "10.24", descripcion: "Urgente", categoria: "servicio" },
+            { codigo: "10.25", descripcion: "Emergencia confirmada", categoria: "servicio" },
+            { codigo: "10.26", descripcion: "En servicio", categoria: "servicio" },
+            { codigo: "10.27", descripcion: "Disponible", categoria: "servicio" },
+            { codigo: "10.28", descripcion: "Emergencia cancelada", categoria: "servicio" },
+            { codigo: "10.29", descripcion: "Continúa en alerta", categoria: "servicio" },
+            { codigo: "10.30", descripcion: "Ingresa su base", categoria: "servicio" },
+            { codigo: "10.31", descripcion: "Traslado / transporte", categoria: "servicio" },
+            { codigo: "10.32", descripcion: "Emergencia en progreso", categoria: "servicio" },
+            { codigo: "10.33", descripcion: "Emergencia controlada", categoria: "servicio" },
+            { codigo: "10.34", descripcion: "Tome precauciones", categoria: "servicio" },
+            { codigo: "10.35", descripcion: "Requiere policía", categoria: "servicio" },
+            { codigo: "10.36", descripcion: "Fuera de sintonía", categoria: "servicio" },
+            { codigo: "10.37", descripcion: "Requiere empresa eléctrica", categoria: "servicio" },
+            { codigo: "10.38", descripcion: "Abastecimiento de ...", categoria: "servicio" },
+            { codigo: "10.39", descripcion: "Fuera de servicio", categoria: "servicio" },
+            { codigo: "10.40", descripcion: "Espere órdenes", categoria: "servicio" },
+            { codigo: "10.41", descripcion: "Herido", categoria: "servicio" },
+            { codigo: "10.42", descripcion: "Muerto", categoria: "servicio" },
+            { codigo: "10.43", descripcion: "Herido FFAA/FFPP", categoria: "servicio" },
+            { codigo: "10.44", descripcion: "Paramédico", categoria: "servicio" },
+            { codigo: "10.45", descripcion: "Médico", categoria: "servicio" },
+            { codigo: "10.46", descripcion: "Enfermo", categoria: "servicio" },
+            { codigo: "10.47", descripcion: "No interrumpir", categoria: "servicio" },
+            { codigo: "10.48", descripcion: "Bombero piloto", categoria: "servicio" },
+            { codigo: "10.49", descripcion: "Piloto rentado", categoria: "servicio" },
+            { codigo: "10.50", descripcion: "En estado de alerta", categoria: "servicio" },
+            { codigo: "10.51", descripcion: "Parturienta", categoria: "servicio" },
+            { codigo: "10.52", descripcion: "Toque sirena", categoria: "servicio" },
+            { codigo: "10.53", descripcion: "Regrese a su base", categoria: "servicio" },
+            { codigo: "10.54", descripcion: "Prosiga la marcha", categoria: "servicio" },
+            { codigo: "10.55", descripcion: "Requiere de Empr. de Agua", categoria: "servicio" },
+            { codigo: "10.56", descripcion: "Deje sin efecto", categoria: "servicio" },
+            { codigo: "10.57", descripcion: "Utilice claves", categoria: "servicio" },
+            { codigo: "10.58", descripcion: "Fin de estado de alerta", categoria: "servicio" },
+            { codigo: "10.59", descripcion: "Guardia nocturna", categoria: "servicio" },
+            { codigo: "10.60", descripcion: "Tipo de emergencia", categoria: "servicio" },
+
+            // ID. EMERGENCIAS (20.xx)
+            { codigo: "20.01", descripcion: "Efectivo CGBVP accidentado", categoria: "emergencia" },
+            { codigo: "20.02", descripcion: "Vehículo CGBVP accidentado", categoria: "emergencia" },
+            { codigo: "20.03", descripcion: "Atentado/artefacto explosivo", categoria: "emergencia" },
+            { codigo: "20.04", descripcion: "Atropellado", categoria: "emergencia" },
+            { codigo: "20.05", descripcion: "Ascensor atrapado", categoria: "emergencia" },
+            { codigo: "20.06", descripcion: "Inundación", categoria: "emergencia" },
+            { codigo: "20.07", descripcion: "Falsa Alarma", categoria: "emergencia" },
+            { codigo: "20.08", descripcion: "Incendio vehicular", categoria: "emergencia" },
+            { codigo: "20.09", descripcion: "Derrumbe", categoria: "emergencia" },
+            { codigo: "20.10", descripcion: "Derrame producto ¿?", categoria: "emergencia" },
+            { codigo: "20.11", descripcion: "Material peligros-indique", categoria: "emergencia" },
+            { codigo: "20.12", descripcion: "Fuga de gas", categoria: "emergencia" },
+            { codigo: "20.13", descripcion: "Grifo/cisterna", categoria: "emergencia" },
+            { codigo: "20.14", descripcion: "Incendio", categoria: "emergencia" },
+            { codigo: "20.19", descripcion: "Catástrofe-orden 7.11-7.12", categoria: "emergencia" },
+            { codigo: "20.20", descripcion: "Incendio forestal", categoria: "emergencia" },
+            { codigo: "20.21", descripcion: "Incendio terreno baldío", categoria: "emergencia" },
+            { codigo: "20.22", descripcion: "Corto circuito", categoria: "emergencia" },
+            { codigo: "20.23", descripcion: "Accidente vehicular", categoria: "emergencia" },
+            { codigo: "20.24", descripcion: "Rescate / Atrapados", categoria: "emergencia" },
+            { codigo: "20.25", descripcion: "Huayco/Erupción volcánica", categoria: "emergencia" },
+            { codigo: "20.26", descripcion: "Evacuación/Fumigación", categoria: "emergencia" },
+            { codigo: "20.27", descripcion: "Poste eléctrico/aviso luminoso", categoria: "emergencia" },
+
+            // Códigos de incendio por magnitud
+            { codigo: "0", descripcion: "Amago de incendio no requiere apoyo", categoria: "emergencia", nivel: 0 },
+            { codigo: "1", descripcion: "No requiere apoyo", categoria: "emergencia", nivel: 1 },
+            { codigo: "2", descripcion: "Requiere apoyo", categoria: "emergencia", nivel: 2 },
+            { codigo: "3", descripcion: "Medianas proporciones", categoria: "emergencia", nivel: 3 },
+            { codigo: "4", descripcion: "Medianas proporciones con probabilidad de propagación", categoria: "emergencia", nivel: 4 },
+            { codigo: "5", descripcion: "Grandes proporciones", categoria: "emergencia", nivel: 5 },
+            { codigo: "6", descripcion: "Masivo, fuera de control de gran magnitud", categoria: "emergencia", nivel: 6 },
+
+            // ID. SERVICIOS ESPECIALES (30.xx)
+            { codigo: "30.30", descripcion: "Otro servicio/Servicio especial", categoria: "especiales" },
+            { codigo: "30.31", descripcion: "Prácticas/charlas/simulacros/ceremonias", categoria: "especiales" },
+            { codigo: "30.32", descripcion: "Eventos/conciertos/festivales", categoria: "especiales" },
+            { codigo: "30.33", descripcion: "Abrir puertas", categoria: "especiales" },
+            { codigo: "30.34", descripcion: "Colocar letreros/pancartas", categoria: "especiales" },
+            { codigo: "30.35", descripcion: "Velorio / Entierro", categoria: "especiales" },
+            { codigo: "30.36", descripcion: "Apoyos sociales (servicios de agua/vacunación)", categoria: "especiales" },
+
+            // ID. JERARQUÍAS (3.xx)
+            { codigo: "3.01", descripcion: "Brigadier General", categoria: "jerarquia" },
+            { codigo: "3.02", descripcion: "Brigadier Mayor", categoria: "jerarquia" },
+            { codigo: "3.03", descripcion: "Brigadier", categoria: "jerarquia" },
+            { codigo: "3.04", descripcion: "Teniente brigadier", categoria: "jerarquia" },
+            { codigo: "3.05", descripcion: "Capitán", categoria: "jerarquia" },
+            { codigo: "3.06", descripcion: "Teniente", categoria: "jerarquia" },
+            { codigo: "3.07", descripcion: "Sub. Teniente", categoria: "jerarquia" },
+            { codigo: "3.08", descripcion: "Seccionario", categoria: "jerarquia" },
+            { codigo: "3.09", descripcion: "Alumno", categoria: "jerarquia" },
+
+            // ID. COMPAÑÍA (30.xx)
+            { codigo: "30.11", descripcion: "Primer jefe de compañía", categoria: "compania" },
+            { codigo: "30.12", descripcion: "Segundo jefe de compañía", categoria: "compania" },
+            { codigo: "30.13", descripcion: "Jefe de operaciones", categoria: "compania" },
+            { codigo: "30.14", descripcion: "Jefe de Sanidad", categoria: "compania" },
+            { codigo: "30.17", descripcion: "Jefe de administración", categoria: "compania" },
+            { codigo: "30.18", descripcion: "Jefe de servicio", categoria: "compania" },
+            { codigo: "30.19", descripcion: "Jefe de disciplina", categoria: "compania" },
+            { codigo: "30.22", descripcion: "Médico de turno", categoria: "compania" },
+
+            // ID. LOCALES (X.xx)
+            { codigo: "X7", descripcion: "Cuartel de compañía", categoria: "locales" },
+            { codigo: "X14", descripcion: "Domicilio", categoria: "locales" },
+            { codigo: "X15", descripcion: "Centro de trabajo", categoria: "locales" },
+
+            // ID. PERSONAL RENTADO (1.xx)
+            { codigo: "1.01", descripcion: "Contador", categoria: "personal" },
+            { codigo: "1.02", descripcion: "Secretaria", categoria: "personal" },
+            { codigo: "1.06", descripcion: "Operador de radio", categoria: "personal" },
+
+            // Comando Nacional (90.xx)
+            { codigo: "90.11", descripcion: "Comandante General", categoria: "nacional" },
+            { codigo: "90.12", descripcion: "Vice Comandante General", categoria: "nacional" },
+            { codigo: "90.13", descripcion: "Presidente del Consejo Nacional De Disciplina", categoria: "nacional" },
+            { codigo: "90.15", descripcion: "Dirección General de Administración", categoria: "nacional" },
+            { codigo: "90.16", descripcion: "Dirección General de Operaciones", categoria: "nacional" },
+            { codigo: "90.17", descripcion: "Director General del Centro De Instrucción", categoria: "nacional" },
+            { codigo: "90.18", descripcion: "Director de Personal", categoria: "nacional" },
+            { codigo: "90.19", descripcion: "Director de Logística", categoria: "nacional" },
+            { codigo: "90.20", descripcion: "Director de Mantenimiento", categoria: "nacional" },
+            { codigo: "90.21", descripcion: "Director de Técnica", categoria: "nacional" },
+            { codigo: "90.22", descripcion: "Director de Sanidad", categoria: "nacional" },
+            { codigo: "90.23", descripcion: "Director de Comunicaciones", categoria: "nacional" },
+            { codigo: "90.24", descripcion: "Director de Seguridad", categoria: "nacional" },
+            { codigo: "90.25", descripcion: "Secretario General", categoria: "nacional" },
+            { codigo: "90.26", descripcion: "Jefe de Imagen Institucional", categoria: "nacional" },
+            { codigo: "90.27", descripcion: "Director de Informática", categoria: "nacional" },
+            { codigo: "90.28", descripcion: "Director de Planificación", categoria: "nacional" },
+            { codigo: "90.29", descripcion: "Asesor Jurídico", categoria: "nacional" },
+            { codigo: "90.30", descripcion: "Director de Economía", categoria: "nacional" },
+            { codigo: "90.31", descripcion: "Jefe de Transmisiones", categoria: "nacional" },
+            { codigo: "90.32", descripcion: "Director General del Centro De Prevención E Investigación De Incendios", categoria: "nacional" },
+            { codigo: "90.33", descripcion: "Director de Control Patrimonial", categoria: "nacional" },
+            { codigo: "90.34", descripcion: "Director de la Escuela Superior", categoria: "nacional" },
+            { codigo: "90.35", descripcion: "Director de la Escuela Técnica", categoria: "nacional" },
+            { codigo: "90.36", descripcion: "Director de la Escuela Básica", categoria: "nacional" },
+            { codigo: "90.37", descripcion: "Director de Investigación de Incendios", categoria: "nacional" },
+            { codigo: "90.38", descripcion: "Jefe de la Oficina de Aduanas", categoria: "nacional" },
+            { codigo: "90.39", descripcion: "Director de Prevención de Incendios", categoria: "nacional" },
+            { codigo: "90.40", descripcion: "Director de Ingeniería", categoria: "nacional" },
+            { codigo: "90.41", descripcion: "Capellán del CGBVP", categoria: "nacional" },
+            { codigo: "90.45", descripcion: "Jefe de Servicios de Comunicaciones", categoria: "nacional" },
+            { codigo: "90.46", descripcion: "Director Unidades Especializadas", categoria: "nacional" },
+            { codigo: "90.47", descripcion: "Jefe USAR 1", categoria: "nacional" },
+            { codigo: "90.48", descripcion: "Jefe Materiales Peligrosos", categoria: "nacional" },
+            { codigo: "90.49", descripcion: "Jefe de la Oficina de Planeamiento Operativo", categoria: "nacional" },
+
+            // Comandancias Departamentales (XX.xx)
+            { codigo: "XX.11", descripcion: "Comandante Departamental", categoria: "departamental" },
+            { codigo: "XX.12", descripcion: "Vice Comandante Departamental", categoria: "departamental" },
+            { codigo: "XX.14", descripcion: "Presidente del Consejo Departamental De Disciplina", categoria: "departamental" },
+            { codigo: "XX.29", descripcion: "Asesor Jurídica Departamental", categoria: "departamental" },
+            { codigo: "XX.15", descripcion: "Jefe de Administración", categoria: "departamental" },
+            { codigo: "XX.19", descripcion: "Jefe de Logística", categoria: "departamental" },
+            { codigo: "XX.20", descripcion: "Jefe de Mantenimiento", categoria: "departamental" },
+            { codigo: "XX.25", descripcion: "Secretario Departamental", categoria: "departamental" },
+            { codigo: "XX.16", descripcion: "Jefe de Instrucción, Operaciones, Prevención E Investigación De Incendios", categoria: "departamental" },
+            { codigo: "XX.16.X", descripcion: "Jefe de la X Brigada", categoria: "departamental" }
+        ];
+
+        let currentFilter = 'all';
+        let filteredClaves = [...claves];
+
+        function renderClaves(clavesToRender = filteredClaves) {
+            const grid = document.getElementById('clavesGrid');
+            const noResults = document.getElementById('noResults');
+            
+            if (clavesToRender.length === 0) {
+                grid.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            noResults.style.display = 'none';
+            
+            grid.innerHTML = clavesToRender.map(clave => {
+                let emergencyLevel = '';
+                if (clave.categoria === 'emergencia' && clave.nivel !== undefined) {
+                    emergencyLevel = `
+                        <div class="emergency-level">
+                            <span class="level-indicator level-${clave.nivel}"></span>
+                            <span>Nivel ${clave.nivel}</span>
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="clave-card" data-categoria="${clave.categoria}">
+                        <div class="clave-codigo">${clave.codigo}</div>
+                        <div class="clave-descripcion">${clave.descripcion}</div>
+                        <div class="clave-categoria">${getCategoriaName(clave.categoria)}</div>
+                        ${emergencyLevel}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getCategoriaName(categoria) {
+            const nombres = {
+                'servicio': 'Servicios',
+                'emergencia': 'Emergencias',
+                'especiales': 'Servicios Especiales',
+                'jerarquia': 'Jerarquías',
+                'compania': 'Compañía',
+                'operativo': 'Cargos Operativos',
+                'nacional': 'Comando Nacional',
+                'departamental': 'Departamentales',
+                'locales': 'Locales',
+                'personal': 'Personal Rentado'
+            };
+            return nombres[categoria] || categoria;
+        }
+
+        function updateStats() {
+            document.getElementById('totalClaves').textContent = claves.length;
+            document.getElementById('visibleClaves').textContent = filteredClaves.length;
+        }
+
+        function filterClaves(searchTerm, categoria) {
+            filteredClaves = claves.filter(clave => {
+                const matchesCategory = categoria === 'all' || clave.categoria === categoria;
+                const matchesSearch = searchTerm === '' || 
+                    clave.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    clave.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
+                
+                return matchesCategory && matchesSearch;
+            });
+            
+            renderClaves(filteredClaves);
+            updateStats();
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            filterClaves(e.target.value, currentFilter);
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelector('.filter-btn.active').classList.remove('active');
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                
+                const searchTerm = document.getElementById('searchInput').value;
+                filterClaves(searchTerm, currentFilter);
+            });
+        });
+
+        // Inicializar
+        renderClaves();
+        updateStats();
+
+        // Agregar funcionalidad de búsqueda por teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+    </script>
+</body>
+</html>
